@@ -1,12 +1,16 @@
-<!DOCTYPE html>
 <?php
-$name = $email;
+session_start();
 
+if(!$_SESSION['id']) {
+  header("Location: index.php");
+    die();
+}
+$title = $content = $user_id;
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-  print('Here inside');
-  $name = trim($_POST["username"]);
-  $password = trim($_POST["password"]);
+  $title = trim($_POST["title"]);
+  $content = trim($_POST["content"]);
+  $user_id = $_SESSION['id'];
 
   $conn = new mysqli('localhost', 'root', '', 'blog');
 
@@ -14,11 +18,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     die("Connection failed: " . $conn->connect_error);
   }
 
-  $sql = "INSERT INTO users (username, password) VALUES ('" . $name ."','" . $password ."')";
+  $sql = "INSERT INTO blogs (title, content, user_id) VALUES ('" . $title ."','" . $content ."'," . $user_id . ")";
 
   if ($conn->query($sql) === TRUE) {
     $conn = null;
-    header("Location: index.php");
+    header("Location: welcome.php");
     die();
   } else {
     echo "Error: " . $sql . "<br>" . $conn->error;
@@ -26,36 +30,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 ?>
 
-<html lang="en" style="height: 100%">
+
+?>
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Blog | Sign up</title>
+  <title>Blog | New</title>
   <style rel="stylesheet">
-    input, button[type=submit]{
+    input, button[type=submit], textarea {
       margin-bottom: 20px;
       padding: 10px;
       font-size: 20px;
-    }
-    #signup-banner {
-      font-size: 20px;
-      color: rgb(105, 105, 105);
     }
   </style>
 </head>
 <body style="margin: 0; padding: 0; height: 100%">
   <main style="display: flex; justify-content: center; height: 100%; align-items: center; background-color: rgb(245, 245, 245)">
-    <section style="background-color: white; width: 30%; text-align: center; padding: 40px; height: 30%">
+    <section style="background-color: white; width: 30%; text-align: center; padding: 40px; height: 80%">
       <form method="POST" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" style="display: flex; flex-direction: column">
-        <h3>Sign up</h3>
-        <input type="text" placeholder="username" name="username" />
-        <input type="password" placeholder="password" name="password" />
-        <button type="submit">Sign up</button>
+        <h3>New post</h3>
+        <input type="title" placeholder="title" name="title" required />
+        <textarea placeholder="Write your sweet blog here" name="content" rows="20" required></textarea>
+        <button type="submit">Save</button>
       </form>
-      <div id="signup-banner">
-        <span>Have an account?</span><a href="index.php">log in</a>
-      </div>
     </section>
   </main>
 </body>
