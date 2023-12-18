@@ -2,7 +2,7 @@
 session_start();
 
 if(!$_SESSION['id']) {
-  header("Location: index.php");
+  header("Location: login.php");
     die();
 }
 $title = $content = $user_id;
@@ -10,6 +10,7 @@ $title = $content = $user_id;
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $title = trim($_POST["title"]);
   $content = trim($_POST["content"]);
+  $is_public = $_POST['isPublic'] ? 1 : 0;
   $user_id = $_SESSION['id'];
 
   $conn = new mysqli('localhost', 'root', '', 'blog');
@@ -18,7 +19,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     die("Connection failed: " . $conn->connect_error);
   }
 
-  $sql = "INSERT INTO blogs (title, content, user_id) VALUES ('" . $title ."','" . $content ."'," . $user_id . ")";
+  $sql = "INSERT INTO blogs (title, content, is_public, user_id) VALUES ('" . $title ."','" . $content ."'," . $is_public . "," . $user_id . ")";
 
   if ($conn->query($sql) === TRUE) {
     $conn = null;
@@ -53,6 +54,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <h3>New post</h3>
         <input type="title" placeholder="title" name="title" required />
         <textarea placeholder="Write your sweet blog here" name="content" rows="20" required></textarea>
+        <div>Public <input type="checkbox" name="isPublic" id="public"/></div>
         <button type="submit">Save</button>
       </form>
     </section>

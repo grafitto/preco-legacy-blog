@@ -9,6 +9,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     $_SESSION['post_title'] = $_GET['title'];
     $_SESSION['post_content'] = $_GET['content'];
     $_SESSION['post_id'] = $_GET['id'];
+    $_SESSION['post_is_public'] = $_GET['is_public'];
     header('Location: editpost.php');
     die();
   }
@@ -26,9 +27,6 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     if ($result->num_rows > 0) {
       // output data of each row
       $blogs = $result->fetch_all(MYSQLI_ASSOC);
-    } else {
-      print('No rows');
-      die();
     }
   } else {
     print('No result');
@@ -99,8 +97,9 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
       padding: 12px;
       border: 1px solid #eee;
       list-style-type: none;
-      background-color: #eee;
+      background-color: #f0f0f0;
       margin-bottom: 12px;
+      border-radius: 4px;
     }
 
     li:hover {
@@ -141,18 +140,29 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     </section>
     <section id="container">
       <ul>
-      <?php foreach($blogs as $blog): ?>
+        <?php if (count($blogs) > 0) { ?>
+          <?php foreach($blogs as $blog): ?>
+              <li>
+                <div id="post-header">
+                  <h4><?= $blog['title'];?></h4>
+                  <span>Creation Date: <?= $blog['creation_date'];?></span>
+                </div>
+                <div id="post-body"><?= $blog['content']; ?></div>
+                <div style="margin-top: 15px; text-align: right">
+                  <?php if($blog['is_public']) { ?>
+                    <span style="color: green; margin-right: 10px">Published</span>
+                  <?php } else { ?>
+                    <span style="color: red; margin-right: 10px;">Not Published</span>
+                  <?php } ?>
+                  <a href="<?= htmlspecialchars($_SERVER["PHP_SELF"]) . "?edit=1&title=" . $blog['title'] . "&content=" . $blog['content'] . "&id=" . $blog['id'] . "&is_public=". $blog['is_public'];?>">Edit</a>
+                </div>
+              </li>
+            <?php endforeach; ?>
+        <?php } else { ?>
           <li>
-            <div id="post-header">
-              <h4><?= $blog['title'];?></h4>
-              <span>Creation Date: <?= $blog['creation_date'];?></span>
-            </div>
-            <div id="post-body"><?= $blog['content']; ?></div>
-            <div style="margin-top: 15px; text-align: right">
-              <a href="<?= htmlspecialchars($_SERVER["PHP_SELF"]) . "?edit=1&title=" . $blog['title'] . "&content=" . $blog['content'] . "&id=" . $blog['id'];?>">Edit</a>
-            </div>
+            No posts yet. Would you want to create a <a href="newpost.php"> new post</a>?
           </li>
-        <?php endforeach; ?>
+          <?php } ?>
       </ul>
     </section>
   </main>

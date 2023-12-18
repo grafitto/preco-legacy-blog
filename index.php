@@ -1,75 +1,160 @@
 <?php
-  session_start();
-?>
-<!DOCTYPE html>
-<?php
-$name = $password;
+session_start();
+$user_id = $_SESSION['id'];
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-  $name = trim($_POST["username"]);
-  $password = trim($_POST["password"]);
-  print($password);
-
-  $conn = new mysqli('localhost', 'root', '', 'blog');
-
-  if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-  }
-
-  $sql = "SELECT * FROM users WHERE password='" . $password . "' AND username='" . $name . "'";
-
-  $result = $conn->query($sql);
-  if($result) {
-    if ($result->num_rows > 0) {
-      // output data of each row
-      $user = $result->fetch_assoc();
-      $_SESSION['id'] = $user['id'];
-      $_SESSION['username'] = $user['username'];
-      $conn = null;
-      header("Location: welcome.php");
-      die();
-    } else {
-      print('No rows');
-      $conn = null;
-      die();
-    }
-  } else {
-    print('No result');
-    $conn = null;
-    die();
-  }
+if ($user_id) {
+  header('Location: welcome.php');
+  die();
 }
+// Fetch blogs
+$conn = new mysqli('localhost', 'root', '', 'blog');
+
+if ($conn->connect_error) {
+  die("Connection failed: " . $conn->connect_error);
+}
+
+$sql = "SELECT * FROM blogs WHERE is_public=1";
+
+$blogs = [];
+
+$result = $conn->query($sql);
+if($result) {
+  if ($result->num_rows > 0) {
+    // output data of each row
+    $blogs = $result->fetch_all(MYSQLI_ASSOC);
+  }
+} else {
+  print('No result');
+  die();
+}
+$conn = null;
 ?>
-<html lang="en" style="height: 100%">
+
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Blog | Log in</title>
+  <title>Blog | Dashboard</title>
   <style rel="stylesheet">
-    input, button[type=submit]{
-      margin-bottom: 20px;
-      padding: 10px;
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    main {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    #header {
+      height: 100px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid grey;
+    }
+    #container {
+      height: 300px;
+    }
+
+    #header div {
+      width: 50%;
+      height: 100%;
+      text-align: right;
+      padding-right: 20px;
+      padding-top: 70px;
+    }
+
+    #header div a {
+      font-size: 25px;
+      padding: 8px;
+      text-decoration: none;
+      color: black
+    }
+
+    #header div a:hover {
+      color: grey;
+    }
+
+    ul {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    li {
+      width: 50%;
+      text-decoration: none;
+      padding: 12px;
+      border: 1px solid #f0f0f0;
+      list-style-type: none;
+      background-color: #eee;
+      margin-bottom: 12px;
+      border-radius: 4px;
+    }
+
+    li:hover {
+      cursor: pointer;
+      background-color: #ddd;
+    }
+
+    #post-header {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      border-bottom: 1px solid white;
+    }
+
+    #post-header span {
+      color: #888;
+      padding-top: 10px;
+    }
+
+    #post-header h4 {
       font-size: 20px;
     }
-    #signup-banner {
-      font-size: 20px;
-      color: rgb(105, 105, 105);
+
+    #post-body {
+      padding-top: 10px;
     }
   </style>
 </head>
-<body style="margin: 0; padding: 0; height: 100%">
-  <main style="display: flex; justify-content: center; height: 100%; align-items: center; background-color: rgb(245, 245, 245)">
-    <section style="background-color: white; width: 30%; text-align: center; padding: 40px; height: 30%">
-    <h3>Log in</h3>
-      <form method="POST" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" style="display: flex; flex-direction: column">
-        <input type="text" placeholder="username" name="username"/>
-        <input type="password" placeholder="password" name="password" />
-        <button type="submit">Log in</button>
-      </form>
-      <div id="signup-banner">
-        <span>Don't have an account?</span><a href="signup.php">Sign up</a>
+<body>
+  <main>
+    <section id="header">
+      <div>
+        <a href="login.php" style="">Log in</a>
       </div>
+    </section>
+    <section id="container">
+      <ul>
+        <?php if (count($blogs) > 0) { ?>
+          <?php foreach($blogs as $blog): ?>
+              <li>
+                <div id="post-header">
+                  <h4><?= $blog['title'];?></h4>
+                  <span>Creation Date: <?= $blog['creation_date'];?></span>
+                </div>
+                <div id="post-body"><?= $blog['content']; ?></div>
+                <div style="margin-top: 15px; text-align: right">
+                  <?php if($blog['is_public']) { ?>
+                    <span style="color: green; margin-right: 10px">Published</span>
+                  <?php } else { ?>
+                    <span style="color: red; margin-right: 10px;">Not Published</span>
+                  <?php } ?>
+                  <a href="<?= htmlspecialchars($_SERVER["PHP_SELF"]) . "?edit=1&title=" . $blog['title'] . "&content=" . $blog['content'] . "&id=" . $blog['id'] . "&is_public=". $blog['is_public'];?>">Edit</a>
+                </div>
+              </li>
+            <?php endforeach; ?>
+        <?php } else { ?>
+          <li>
+            No posts yet. Would you want to <a href="login.php"> login </a> and create one?
+          </li>
+          <?php } ?>
+      </ul>
     </section>
   </main>
 </body>
